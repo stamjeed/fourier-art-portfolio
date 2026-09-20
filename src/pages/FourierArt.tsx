@@ -44,12 +44,12 @@ export default function FourierArt() {
   // ✅ NEW: circles visibility
   const [showCircles, setShowCircles] = useState(true);
 
-  // phone UX: collapse controls
-  const [showControls, setShowControls] = useState(true);
-
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth < 640 : false
   );
+
+  // phone UX: settings start collapsed (they're secondary to Draw -> Convert -> Reconstruction)
+  const [showControls, setShowControls] = useState(!isMobile);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 640);
@@ -366,11 +366,108 @@ export default function FourierArt() {
     return () => cancelAnimationFrame(raf);
   }, [terms, running, numCircles, speed, stopAfterOne, showCircles]);
 
+  const settingsPanel = (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+        columnGap: 20,
+      }}
+    >
+      <div>
+        <label style={labelStyle}>
+          Circles: <b>{numCircles}</b>
+        </label>
+        <input
+          type="range"
+          min={10}
+          max={450}
+          value={numCircles}
+          onChange={(e) => setNumCircles(Number(e.target.value))}
+          className="fa-range"
+        />
+        <p style={helpStyle}>How many spinning circles redraw your picture — more of them means a closer match.</p>
+      </div>
+
+      <div>
+        <label style={labelStyle}>
+          Speed: <b>{speed.toFixed(1)}x</b>
+        </label>
+        <input
+          type="range"
+          min={0.2}
+          max={3}
+          step={0.1}
+          value={speed}
+          onChange={(e) => setSpeed(Number(e.target.value))}
+          className="fa-range"
+        />
+        <p style={helpStyle}>How fast the reconstruction animation plays.</p>
+      </div>
+
+      <div>
+        <label style={labelStyle}>
+          Samples: <b>{sampleN}</b>
+        </label>
+        <input
+          type="range"
+          min={200}
+          max={1500}
+          step={50}
+          value={sampleN}
+          onChange={(e) => setSampleN(Number(e.target.value))}
+          className="fa-range"
+        />
+        <p style={helpStyle}>How many points your drawing is split into before conversion — more captures finer detail.</p>
+      </div>
+
+      <div>
+        <label style={labelStyle}>
+          Smoothness: <b>{smoothness}</b>
+        </label>
+        <input
+          type="range"
+          min={1}
+          max={21}
+          step={2}
+          value={smoothness}
+          onChange={(e) => setSmoothness(Number(e.target.value))}
+          className="fa-range"
+        />
+        <p style={helpStyle}>Evens out shaky hand-drawn lines before conversion.</p>
+      </div>
+
+      <div style={{ gridColumn: isMobile ? "auto" : "1 / -1" }}>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginTop: 8,
+            fontSize: 14,
+            color: "var(--fa-text-soft)",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={stopAfterOne}
+            onChange={(e) => setStopAfterOne(e.target.checked)}
+            className="fa-checkbox"
+          />
+          Stop after reconstruction
+        </label>
+        <p style={{ ...helpStyle, marginLeft: 24 }}>
+          Freeze on the finished drawing instead of looping the animation forever.
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <div
       style={{
         fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
-        minHeight: "100vh",
+        minHeight: "100dvh",
         padding: isMobile ? "20px 0 40px" : "40px 0 56px",
       }}
     >
@@ -502,113 +599,10 @@ export default function FourierArt() {
               </button>
             </div>
 
-            {isMobile && (
-              <button
-                onClick={() => setShowControls((v) => !v)}
-                className="fa-btn"
-                style={{ width: "100%", marginTop: 12 }}
-              >
-                {showControls ? "Hide Controls" : "Show Controls"}
-              </button>
-            )}
-
-            {(!isMobile || showControls) && (
-              <div
-                style={{
-                  marginTop: 16,
-                  paddingTop: 14,
-                  borderTop: "1px solid var(--fa-border)",
-                  display: "grid",
-                  gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-                  columnGap: 20,
-                }}
-              >
-                <div>
-                  <label style={labelStyle}>
-                    Circles: <b>{numCircles}</b>
-                  </label>
-                  <input
-                    type="range"
-                    min={10}
-                    max={450}
-                    value={numCircles}
-                    onChange={(e) => setNumCircles(Number(e.target.value))}
-                    className="fa-range"
-                  />
-                  <p style={helpStyle}>How many spinning circles redraw your picture — more of them means a closer match.</p>
-                </div>
-
-                <div>
-                  <label style={labelStyle}>
-                    Speed: <b>{speed.toFixed(1)}x</b>
-                  </label>
-                  <input
-                    type="range"
-                    min={0.2}
-                    max={3}
-                    step={0.1}
-                    value={speed}
-                    onChange={(e) => setSpeed(Number(e.target.value))}
-                    className="fa-range"
-                  />
-                  <p style={helpStyle}>How fast the reconstruction animation plays.</p>
-                </div>
-
-                <div>
-                  <label style={labelStyle}>
-                    Samples: <b>{sampleN}</b>
-                  </label>
-                  <input
-                    type="range"
-                    min={200}
-                    max={1500}
-                    step={50}
-                    value={sampleN}
-                    onChange={(e) => setSampleN(Number(e.target.value))}
-                    className="fa-range"
-                  />
-                  <p style={helpStyle}>How many points your drawing is split into before conversion — more captures finer detail.</p>
-                </div>
-
-                <div>
-                  <label style={labelStyle}>
-                    Smoothness: <b>{smoothness}</b>
-                  </label>
-                  <input
-                    type="range"
-                    min={1}
-                    max={21}
-                    step={2}
-                    value={smoothness}
-                    onChange={(e) => setSmoothness(Number(e.target.value))}
-                    className="fa-range"
-                  />
-                  <p style={helpStyle}>Evens out shaky hand-drawn lines before conversion.</p>
-                </div>
-
-                <div style={{ gridColumn: isMobile ? "auto" : "1 / -1" }}>
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      marginTop: 8,
-                      fontSize: 14,
-                      color: "var(--fa-text-soft)",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={stopAfterOne}
-                      onChange={(e) => setStopAfterOne(e.target.checked)}
-                      className="fa-checkbox"
-                    />
-                    Stop after reconstruction
-                  </label>
-                  <p style={{ ...helpStyle, marginLeft: 24 }}>
-                    Freeze on the finished drawing instead of looping the animation forever.
-                  </p>
-                </div>
+            {/* Settings live inline on desktop; on mobile they move below Reconstruction, collapsed */}
+            {!isMobile && (
+              <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--fa-border)" }}>
+                {settingsPanel}
               </div>
             )}
           </div>
@@ -644,6 +638,19 @@ export default function FourierArt() {
               traces your original drawing back out — that's what's animating above.
             </div>
           </div>
+
+          {isMobile && (
+            <div className="fa-card" style={{ padding: 14 }}>
+              <button
+                onClick={() => setShowControls((v) => !v)}
+                className="fa-btn"
+                style={{ width: "100%" }}
+              >
+                {showControls ? "Hide Controls" : "Show Controls"}
+              </button>
+              {showControls && <div style={{ marginTop: 14 }}>{settingsPanel}</div>}
+            </div>
+          )}
         </div>
       </div>
     </div>
