@@ -380,7 +380,8 @@ export default function FourierArt() {
         </h1>
 
         <p style={{ marginTop: 0, opacity: 0.85, fontSize: isMobile ? 13 : 16 }}>
-          Draw on the left. Click <b>Convert</b> to watch your drawing reconstructed using rotating circles (epicycles).
+          Draw anything on the left, then hit <b>Convert</b>. A ring of spinning circles will redraw your
+          picture on the right, one loop at a time.
         </p>
 
         <div
@@ -542,8 +543,9 @@ export default function FourierArt() {
                 lineHeight: 1.4,
               }}
             >
-              <b>How it works:</b> Your drawing becomes a complex signal <code>x + i·y</code>. We compute its DFT
-              coefficients and animate epicycles that sum to reconstruct the path.
+              <b>How it works:</b> Every drawing can be rebuilt out of many spinning circles of different
+              sizes and speeds. Chain them tip-to-tail and the last point traces your original drawing back
+              out — that's what's animating on the right.
             </div>
           </div>
         </div>
