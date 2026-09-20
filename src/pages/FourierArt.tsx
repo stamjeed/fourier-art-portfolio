@@ -1,110 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-
-type Pt = { x: number; y: number };
-type Complex = { re: number; im: number };
-type FourierTerm = { freq: number; amp: number; phase: number; c: Complex };
-
-// ---------- Complex helpers ----------
-const cAdd = (a: Complex, b: Complex): Complex => ({ re: a.re + b.re, im: a.im + b.im });
-const cMul = (a: Complex, b: Complex): Complex => ({
-  re: a.re * b.re - a.im * b.im,
-  im: a.re * b.im + a.im * b.re,
-});
-const cMag = (a: Complex) => Math.hypot(a.re, a.im);
-const cArg = (a: Complex) => Math.atan2(a.im, a.re);
-const cis = (theta: number): Complex => ({ re: Math.cos(theta), im: Math.sin(theta) });
-
-// ---------- Resampling ----------
-function resample(points: Pt[], targetN: number): Pt[] {
-  if (points.length < 2) return points;
-
-  const d: number[] = [0];
-  for (let i = 1; i < points.length; i++) {
-    const dx = points[i].x - points[i - 1].x;
-    const dy = points[i].y - points[i - 1].y;
-    d.push(d[i - 1] + Math.hypot(dx, dy));
-  }
-  const total = d[d.length - 1];
-  if (total === 0) return points;
-
-  const step = total / (targetN - 1);
-  const out: Pt[] = [points[0]];
-  let j = 1;
-
-  for (let i = 1; i < targetN - 1; i++) {
-    const dist = i * step;
-    while (j < d.length - 1 && d[j] < dist) j++;
-
-    const d0 = d[j - 1];
-    const d1 = d[j];
-    const t = d1 === d0 ? 0 : (dist - d0) / (d1 - d0);
-
-    out.push({
-      x: points[j - 1].x + t * (points[j].x - points[j - 1].x),
-      y: points[j - 1].y + t * (points[j].y - points[j - 1].y),
-    });
-  }
-
-  out.push(points[points.length - 1]);
-  return out;
-}
-
-// Smooth points WITHOUT wrap-around (for open curves)
-function smoothPoints(points: Pt[], windowSize: number): Pt[] {
-  if (points.length < 3) return points;
-  const w = Math.max(1, Math.floor(windowSize));
-  if (w === 1) return points;
-
-  const half = Math.floor(w / 2);
-  const out: Pt[] = [];
-
-  for (let i = 0; i < points.length; i++) {
-    const start = Math.max(0, i - half);
-    const end = Math.min(points.length - 1, i + half);
-
-    let sx = 0;
-    let sy = 0;
-    let count = 0;
-
-    for (let j = start; j <= end; j++) {
-      sx += points[j].x;
-      sy += points[j].y;
-      count++;
-    }
-
-    out.push({ x: sx / count, y: sy / count });
-  }
-
-  return out;
-}
-
-// ---------- DFT ----------
-function dftComplex(points: Pt[]): FourierTerm[] {
-  const N = points.length;
-  const signal: Complex[] = points.map((p) => ({ re: p.x, im: p.y }));
-
-  const terms: FourierTerm[] = [];
-  for (let k = -Math.floor(N / 2); k <= Math.floor((N - 1) / 2); k++) {
-    let sum: Complex = { re: 0, im: 0 };
-
-    for (let n = 0; n < N; n++) {
-      const phi = (-2 * Math.PI * k * n) / N;
-      sum = cAdd(sum, cMul(signal[n], cis(phi)));
-    }
-
-    sum = { re: sum.re / N, im: sum.im / N };
-
-    terms.push({
-      freq: k,
-      amp: cMag(sum),
-      phase: cArg(sum),
-      c: sum,
-    });
-  }
-
-  terms.sort((a, b) => a.freq - b.freq);
-  return terms;
-}
+import type { Pt, FourierTerm } from "../lib/fourier";
+import DftWorker from "../workers/dft.worker?worker";
+import type { DftWorkerRequest, DftWorkerResponse } from "../workers/dft.worker";
 
 // ---------- Canvas helpers ----------
 function clearCanvas(ctx: CanvasRenderingContext2D, w: number, h: number) {
@@ -122,6 +19,20 @@ export default function FourierArt() {
   const [rawPoints, setRawPoints] = useState<Pt[]>([]);
   const [terms, setTerms] = useState<FourierTerm[] | null>(null);
   const [running, setRunning] = useState(false);
+  const [computing, setComputing] = useState(false);
+
+  // DFT runs in a worker so large sample counts don't freeze the UI thread
+  const workerRef = useRef<Worker | null>(null);
+  const convertTokenRef = useRef(0);
+
+  useEffect(() => {
+    const worker = new DftWorker();
+    workerRef.current = worker;
+    return () => {
+      worker.terminate();
+      workerRef.current = null;
+    };
+  }, []);
 
   const [numCircles, setNumCircles] = useState(160);
   const [speed, setSpeed] = useState(1.0);
@@ -278,22 +189,40 @@ export default function FourierArt() {
 
   const onConvert = () => {
     if (rawPoints.length < 10) return;
+    const worker = workerRef.current;
+    if (!worker) return;
 
-    let pts = resample(rawPoints, sampleN);
-    pts = smoothPoints(pts, smoothness);
+    const token = ++convertTokenRef.current;
+    setComputing(true);
 
-    const computed = dftComplex(pts);
-    setTerms(computed);
+    const handleMessage = (e: MessageEvent) => {
+      worker.removeEventListener("message", handleMessage);
+      // ignore stale results from a superseded Convert or an intervening Clear
+      if (token !== convertTokenRef.current) return;
 
-    stopRequestedRef.current = false;
+      const { terms: computed } = e.data as DftWorkerResponse;
+      setTerms(computed);
 
-    // ✅ show circles during animation
-    setShowCircles(true);
+      stopRequestedRef.current = false;
 
-    setRunning(true);
+      // ✅ show circles during animation
+      setShowCircles(true);
+
+      setRunning(true);
+      setComputing(false);
+    };
+
+    worker.addEventListener("message", handleMessage);
+    worker.postMessage({
+      points: rawPoints,
+      sampleN,
+      smoothness,
+    } satisfies DftWorkerRequest);
   };
 
   const onClear = () => {
+    convertTokenRef.current++; // invalidate any in-flight computation
+    setComputing(false);
     setRunning(false);
     setTerms(null);
     setRawPoints([]);
@@ -315,6 +244,13 @@ export default function FourierArt() {
 
     let t = 0;
     const path: Pt[] = [];
+    const MAX_PATH_LEN = 1500;
+
+    // Sort once per effect run instead of every animation frame
+    const sortedTerms = terms
+      ? [...terms].sort((a, b) => Math.abs(a.freq) - Math.abs(b.freq))
+      : [];
+    const useTerms = sortedTerms.slice(0, Math.min(numCircles, sortedTerms.length));
 
     const drawFrame = () => {
       // Keep final drawing visible when not running
@@ -336,14 +272,15 @@ export default function FourierArt() {
       ctx.fillRect(0, 0, w, h);
       ctx.globalAlpha = 1;
 
-      const sorted = [...terms].sort((a, b) => Math.abs(a.freq) - Math.abs(b.freq));
-      const useTerms = sorted.slice(0, Math.min(numCircles, sorted.length));
-
       let x = w / 2;
       let y = h / 2;
 
       // ✅ Only draw circles/arms while animating (or when user wants)
       if (showCircles) {
+        // Batch every circle/arm into two paths instead of one stroke() call per term
+        const circles = new Path2D();
+        const arms = new Path2D();
+
         for (const term of useTerms) {
           const prevX = x;
           const prevY = y;
@@ -354,17 +291,17 @@ export default function FourierArt() {
           x += radius * Math.cos(angle);
           y += radius * Math.sin(angle);
 
-          ctx.globalAlpha = 0.24;
-          ctx.beginPath();
-          ctx.arc(prevX, prevY, radius, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.globalAlpha = 1;
+          circles.moveTo(prevX + radius, prevY);
+          circles.arc(prevX, prevY, radius, 0, Math.PI * 2);
 
-          ctx.beginPath();
-          ctx.moveTo(prevX, prevY);
-          ctx.lineTo(x, y);
-          ctx.stroke();
+          arms.moveTo(prevX, prevY);
+          arms.lineTo(x, y);
         }
+
+        ctx.globalAlpha = 0.24;
+        ctx.stroke(circles);
+        ctx.globalAlpha = 1;
+        ctx.stroke(arms);
       } else {
         // still compute endpoint, just don't draw circles
         for (const term of useTerms) {
@@ -375,9 +312,12 @@ export default function FourierArt() {
         }
       }
 
-      // path
-      path.unshift({ x, y });
-      if (path.length > 1500) path.pop();
+      // path: append to the end and trim in occasional batches, instead of
+      // an O(n) unshift/pop on every single frame
+      path.push({ x, y });
+      if (path.length > MAX_PATH_LEN * 2) {
+        path.splice(0, path.length - MAX_PATH_LEN);
+      }
 
       // draw path with break on big jumps
       const breakDist = Math.min(w, h) * 0.25;
@@ -482,9 +422,11 @@ export default function FourierArt() {
                 style={{
                   ...btnStyle,
                   gridColumn: isMobile ? "1 / -1" : "auto",
+                  opacity: computing ? 0.6 : 1,
                 }}
+                disabled={computing}
               >
-                Convert
+                {computing ? "Computing…" : "Convert"}
               </button>
 
               <button
