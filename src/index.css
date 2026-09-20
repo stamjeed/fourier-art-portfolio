@@ -1,3 +1,118 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --fa-bg: #f4f5fb;
+  --fa-card: #ffffff;
+  --fa-border: #e3e5f0;
+  --fa-text: #1e2130;
+  --fa-text-soft: #61637a;
+  --fa-accent: #4f46e5;
+  --fa-accent-hover: #4338ca;
+  --fa-accent-soft: #edecfd;
+}
+
+body {
+  background: var(--fa-bg);
+  color: var(--fa-text);
+}
+
+.fa-card {
+  background: var(--fa-card);
+  border: 1px solid var(--fa-border);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.fa-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--fa-accent-soft);
+  color: var(--fa-accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.fa-btn {
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--fa-border);
+  background: #fff;
+  color: var(--fa-text);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease, opacity 0.15s ease;
+}
+
+.fa-btn:hover:not(:disabled) {
+  background: #f2f3fa;
+  border-color: #c9cce3;
+}
+
+.fa-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.fa-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.fa-btn-primary {
+  background: var(--fa-accent);
+  border-color: var(--fa-accent);
+  color: #fff;
+}
+
+.fa-btn-primary:hover:not(:disabled) {
+  background: var(--fa-accent-hover);
+  border-color: var(--fa-accent-hover);
+}
+
+.fa-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--fa-border);
+  outline: none;
+  margin: 6px 0;
+}
+
+.fa-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--fa-accent);
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--fa-accent);
+}
+
+.fa-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--fa-accent);
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--fa-accent);
+  box-sizing: border-box;
+}
+
+.fa-checkbox {
+  accent-color: var(--fa-accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}

@@ -367,33 +367,75 @@ export default function FourierArt() {
   }, [terms, running, numCircles, speed, stopAfterOne, showCircles]);
 
   return (
-    <div style={{ fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial" }}>
+    <div
+      style={{
+        fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
+        minHeight: "100vh",
+        padding: isMobile ? "20px 0 40px" : "40px 0 56px",
+      }}
+    >
       <div
         style={{
           maxWidth: 1400,
-          margin: "24px auto",
+          margin: "0 auto",
           padding: isMobile ? "0 12px" : "0 16px",
         }}
       >
-        <h1 style={{ fontSize: isMobile ? 22 : 28, marginBottom: 6 }}>
-          Fourier Transform Art Generator
-        </h1>
+        <header style={{ marginBottom: 18 }}>
+          <h1
+            style={{
+              fontSize: isMobile ? 24 : 32,
+              margin: 0,
+              marginBottom: 6,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            <span style={{ color: "var(--fa-accent)" }}>Fourier</span> Art Generator
+          </h1>
+          <p style={{ margin: 0, color: "var(--fa-text-soft)", fontSize: isMobile ? 13 : 16 }}>
+            Draw anything on the left, then hit <b>Convert</b>. A ring of spinning circles will redraw your
+            picture on the right, one loop at a time.
+          </p>
+        </header>
 
-        <p style={{ marginTop: 0, opacity: 0.85, fontSize: isMobile ? 13 : 16 }}>
-          Draw anything on the left, then hit <b>Convert</b>. A ring of spinning circles will redraw your
-          picture on the right, one loop at a time.
-        </p>
+        <section
+          className="fa-card"
+          style={{
+            display: "flex",
+            gap: 12,
+            padding: isMobile ? "14px 16px" : "18px 22px",
+            marginBottom: 20,
+            alignItems: "flex-start",
+          }}
+        >
+          <span className="fa-badge" aria-hidden style={{ fontStyle: "italic", fontFamily: "Georgia, serif" }}>
+            i
+          </span>
+          <div>
+            <div style={{ fontWeight: 700, marginBottom: 4, fontSize: isMobile ? 14 : 15 }}>
+              What is this, and why does it exist?
+            </div>
+            <p style={{ margin: 0, color: "var(--fa-text-soft)", fontSize: isMobile ? 13 : 14, lineHeight: 1.5 }}>
+              It's a little doodle toy. Any shape you draw, no matter how squiggly, can be rebuilt out of
+              circles spinning at different sizes and speeds. This page lets you draw something and watch
+              that idea happen live, so a neat piece of math becomes something you can actually see and
+              play with — no background in math needed.
+            </p>
+          </div>
+        </section>
 
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: 18,
+            gap: 20,
             alignItems: "start",
           }}
         >
-          <div>
-            <h3 style={{ margin: "10px 0" }}>1) Draw</h3>
+          <div className="fa-card" style={{ padding: isMobile ? 14 : 18 }}>
+            <h3 style={{ margin: "0 0 12px", display: "flex", alignItems: "center", gap: 8, fontSize: 16 }}>
+              <span className="fa-badge">1</span> Draw
+            </h3>
             <canvas
               ref={drawRef}
               onPointerDown={onPointerDown}
@@ -401,12 +443,13 @@ export default function FourierArt() {
               onPointerUp={onPointerUp}
               onPointerLeave={onPointerUp}
               style={{
-                borderRadius: 16,
-                border: "1px solid rgba(0,0,0,0.2)",
+                borderRadius: 14,
+                border: "1px solid var(--fa-border)",
                 touchAction: "none",
                 width: "100%",
                 height: "auto",
                 display: "block",
+                background: "#fff",
               }}
             />
 
@@ -415,16 +458,13 @@ export default function FourierArt() {
                 display: "grid",
                 gridTemplateColumns: isMobile ? "1fr 1fr" : "auto auto auto",
                 gap: 10,
-                marginTop: 12,
+                marginTop: 14,
               }}
             >
               <button
                 onClick={onConvert}
-                style={{
-                  ...btnStyle,
-                  gridColumn: isMobile ? "1 / -1" : "auto",
-                  opacity: computing ? 0.6 : 1,
-                }}
+                className="fa-btn fa-btn-primary"
+                style={{ gridColumn: isMobile ? "1 / -1" : "auto" }}
                 disabled={computing}
               >
                 {computing ? "Computing…" : "Convert"}
@@ -436,14 +476,14 @@ export default function FourierArt() {
                   setShowCircles(true); // if user presses Play, show circles again
                   setRunning((v) => !v);
                 }}
-                style={btnStyle}
+                className="fa-btn"
                 disabled={!terms}
                 title={!terms ? "Convert first" : ""}
               >
                 {running ? "Pause" : "Play"}
               </button>
 
-              <button onClick={onClear} style={btnStyle}>
+              <button onClick={onClear} className="fa-btn">
                 Clear
               </button>
             </div>
@@ -451,70 +491,99 @@ export default function FourierArt() {
             {isMobile && (
               <button
                 onClick={() => setShowControls((v) => !v)}
-                style={{ ...btnStyle, width: "100%", marginTop: 12 }}
+                className="fa-btn"
+                style={{ width: "100%", marginTop: 12 }}
               >
                 {showControls ? "Hide Controls" : "Show Controls"}
               </button>
             )}
 
             {(!isMobile || showControls) && (
-              <div style={{ marginTop: 14 }}>
-                <label style={labelStyle}>
-                  Circles: <b>{numCircles}</b>
-                </label>
-                <input
-                  type="range"
-                  min={10}
-                  max={450}
-                  value={numCircles}
-                  onChange={(e) => setNumCircles(Number(e.target.value))}
-                  style={{ width: "100%" }}
-                />
+              <div
+                style={{
+                  marginTop: 16,
+                  paddingTop: 14,
+                  borderTop: "1px solid var(--fa-border)",
+                  display: "grid",
+                  gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+                  columnGap: 20,
+                }}
+              >
+                <div>
+                  <label style={labelStyle}>
+                    Circles: <b>{numCircles}</b>
+                  </label>
+                  <input
+                    type="range"
+                    min={10}
+                    max={450}
+                    value={numCircles}
+                    onChange={(e) => setNumCircles(Number(e.target.value))}
+                    className="fa-range"
+                  />
+                </div>
 
-                <label style={labelStyle}>
-                  Speed: <b>{speed.toFixed(1)}x</b>
-                </label>
-                <input
-                  type="range"
-                  min={0.2}
-                  max={3}
-                  step={0.1}
-                  value={speed}
-                  onChange={(e) => setSpeed(Number(e.target.value))}
-                  style={{ width: "100%" }}
-                />
+                <div>
+                  <label style={labelStyle}>
+                    Speed: <b>{speed.toFixed(1)}x</b>
+                  </label>
+                  <input
+                    type="range"
+                    min={0.2}
+                    max={3}
+                    step={0.1}
+                    value={speed}
+                    onChange={(e) => setSpeed(Number(e.target.value))}
+                    className="fa-range"
+                  />
+                </div>
 
-                <label style={labelStyle}>
-                  Samples: <b>{sampleN}</b>
-                </label>
-                <input
-                  type="range"
-                  min={200}
-                  max={1500}
-                  step={50}
-                  value={sampleN}
-                  onChange={(e) => setSampleN(Number(e.target.value))}
-                  style={{ width: "100%" }}
-                />
+                <div>
+                  <label style={labelStyle}>
+                    Samples: <b>{sampleN}</b>
+                  </label>
+                  <input
+                    type="range"
+                    min={200}
+                    max={1500}
+                    step={50}
+                    value={sampleN}
+                    onChange={(e) => setSampleN(Number(e.target.value))}
+                    className="fa-range"
+                  />
+                </div>
 
-                <label style={labelStyle}>
-                  Smoothness: <b>{smoothness}</b>
-                </label>
-                <input
-                  type="range"
-                  min={1}
-                  max={21}
-                  step={2}
-                  value={smoothness}
-                  onChange={(e) => setSmoothness(Number(e.target.value))}
-                  style={{ width: "100%" }}
-                />
+                <div>
+                  <label style={labelStyle}>
+                    Smoothness: <b>{smoothness}</b>
+                  </label>
+                  <input
+                    type="range"
+                    min={1}
+                    max={21}
+                    step={2}
+                    value={smoothness}
+                    onChange={(e) => setSmoothness(Number(e.target.value))}
+                    className="fa-range"
+                  />
+                </div>
 
-                <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginTop: 8,
+                    gridColumn: isMobile ? "auto" : "1 / -1",
+                    fontSize: 14,
+                    color: "var(--fa-text-soft)",
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={stopAfterOne}
                     onChange={(e) => setStopAfterOne(e.target.checked)}
+                    className="fa-checkbox"
                   />
                   Stop after reconstruction
                 </label>
@@ -522,30 +591,35 @@ export default function FourierArt() {
             )}
           </div>
 
-          <div>
-            <h3 style={{ margin: "10px 0" }}>2) Reconstruction</h3>
+          <div className="fa-card" style={{ padding: isMobile ? 14 : 18 }}>
+            <h3 style={{ margin: "0 0 12px", display: "flex", alignItems: "center", gap: 8, fontSize: 16 }}>
+              <span className="fa-badge">2</span> Reconstruction
+            </h3>
             <canvas
               ref={reconRef}
               style={{
-                borderRadius: 16,
-                border: "1px solid rgba(0,0,0,0.2)",
+                borderRadius: 14,
+                border: "1px solid var(--fa-border)",
                 width: "100%",
                 height: "auto",
                 display: "block",
+                background: "#fff",
               }}
             />
 
             <div
               style={{
                 marginTop: 14,
-                opacity: 0.9,
+                paddingTop: 14,
+                borderTop: "1px solid var(--fa-border)",
+                color: "var(--fa-text-soft)",
                 fontSize: isMobile ? 13 : 14,
-                lineHeight: 1.4,
+                lineHeight: 1.5,
               }}
             >
-              <b>How it works:</b> Every drawing can be rebuilt out of many spinning circles of different
-              sizes and speeds. Chain them tip-to-tail and the last point traces your original drawing back
-              out — that's what's animating on the right.
+              <b style={{ color: "var(--fa-text)" }}>How it works:</b> Every drawing can be rebuilt out of
+              many spinning circles of different sizes and speeds. Chain them tip-to-tail and the last point
+              traces your original drawing back out — that's what's animating above.
             </div>
           </div>
         </div>
@@ -554,17 +628,10 @@ export default function FourierArt() {
   );
 }
 
-const btnStyle: React.CSSProperties = {
-  padding: "10px 14px",
-  borderRadius: 12,
-  border: "1px solid rgba(0,0,0,0.2)",
-  background: "white",
-  cursor: "pointer",
-};
-
 const labelStyle: React.CSSProperties = {
   display: "block",
   marginTop: 10,
-  marginBottom: 6,
-  opacity: 0.85,
+  marginBottom: 4,
+  fontSize: 14,
+  color: "var(--fa-text-soft)",
 };
