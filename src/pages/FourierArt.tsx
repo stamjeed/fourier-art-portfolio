@@ -419,7 +419,21 @@ export default function FourierArt() {
               It's a little doodle toy. Any shape you draw, no matter how squiggly, can be rebuilt out of
               circles spinning at different sizes and speeds. This page lets you draw something and watch
               that idea happen live, so a neat piece of math becomes something you can actually see and
-              play with — no background in math needed.
+              play with.
+            </p>
+            <p
+              style={{
+                margin: 0,
+                marginTop: 8,
+                color: "var(--fa-text-soft)",
+                fontSize: isMobile ? 13 : 14,
+                lineHeight: 1.5,
+              }}
+            >
+              Mathematically, it's the Fourier transform: your drawing is treated as a repeating wave and
+              decomposed into a sum of simple rotating terms, one per circle, each with its own frequency,
+              radius, and starting angle. Adding those rotations back together — largest circle first, down
+              to the smallest — retraces the exact path you drew.
             </p>
           </div>
         </section>
@@ -521,6 +535,7 @@ export default function FourierArt() {
                     onChange={(e) => setNumCircles(Number(e.target.value))}
                     className="fa-range"
                   />
+                  <p style={helpStyle}>How many spinning circles redraw your picture — more of them means a closer match.</p>
                 </div>
 
                 <div>
@@ -536,6 +551,7 @@ export default function FourierArt() {
                     onChange={(e) => setSpeed(Number(e.target.value))}
                     className="fa-range"
                   />
+                  <p style={helpStyle}>How fast the reconstruction animation plays.</p>
                 </div>
 
                 <div>
@@ -551,6 +567,7 @@ export default function FourierArt() {
                     onChange={(e) => setSampleN(Number(e.target.value))}
                     className="fa-range"
                   />
+                  <p style={helpStyle}>How many points your drawing is split into before conversion — more captures finer detail.</p>
                 </div>
 
                 <div>
@@ -566,27 +583,32 @@ export default function FourierArt() {
                     onChange={(e) => setSmoothness(Number(e.target.value))}
                     className="fa-range"
                   />
+                  <p style={helpStyle}>Evens out shaky hand-drawn lines before conversion.</p>
                 </div>
 
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    marginTop: 8,
-                    gridColumn: isMobile ? "auto" : "1 / -1",
-                    fontSize: 14,
-                    color: "var(--fa-text-soft)",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={stopAfterOne}
-                    onChange={(e) => setStopAfterOne(e.target.checked)}
-                    className="fa-checkbox"
-                  />
-                  Stop after reconstruction
-                </label>
+                <div style={{ gridColumn: isMobile ? "auto" : "1 / -1" }}>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      marginTop: 8,
+                      fontSize: 14,
+                      color: "var(--fa-text-soft)",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={stopAfterOne}
+                      onChange={(e) => setStopAfterOne(e.target.checked)}
+                      className="fa-checkbox"
+                    />
+                    Stop after reconstruction
+                  </label>
+                  <p style={{ ...helpStyle, marginLeft: 24 }}>
+                    Freeze on the finished drawing instead of looping the animation forever.
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -634,4 +656,13 @@ const labelStyle: React.CSSProperties = {
   marginBottom: 4,
   fontSize: 14,
   color: "var(--fa-text-soft)",
+};
+
+const helpStyle: React.CSSProperties = {
+  margin: 0,
+  marginTop: 2,
+  fontSize: 12,
+  lineHeight: 1.4,
+  color: "var(--fa-text-soft)",
+  opacity: 0.75,
 };
