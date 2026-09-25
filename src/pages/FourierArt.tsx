@@ -193,9 +193,15 @@ export default function FourierArt() {
     const worker = workerRef.current;
     if (!worker) return;
 
-    // on phones, jump straight to the reconstruction so users don't have to scroll for it themselves
+    // on phones, scroll toward the reconstruction so users don't have to hunt for it,
+    // but stop partway so the original drawing stays visible just above it (nothing looks "gone")
     if (isMobile) {
-      reconSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const target = reconSectionRef.current;
+      if (target) {
+        const rect = target.getBoundingClientRect();
+        const offset = window.scrollY + rect.top - window.innerHeight * 0.4;
+        window.scrollTo({ top: Math.max(0, offset), behavior: "smooth" });
+      }
     }
 
     const token = ++convertTokenRef.current;
