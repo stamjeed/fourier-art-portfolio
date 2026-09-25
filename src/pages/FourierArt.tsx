@@ -11,6 +11,7 @@ function clearCanvas(ctx: CanvasRenderingContext2D, w: number, h: number) {
 export default function FourierArt() {
   const drawRef = useRef<HTMLCanvasElement | null>(null);
   const reconRef = useRef<HTMLCanvasElement | null>(null);
+  const reconSectionRef = useRef<HTMLDivElement | null>(null);
 
   // stop AFTER drawing final frame
   const stopRequestedRef = useRef(false);
@@ -191,6 +192,11 @@ export default function FourierArt() {
     if (rawPoints.length < 10) return;
     const worker = workerRef.current;
     if (!worker) return;
+
+    // on phones, jump straight to the reconstruction so users don't have to scroll for it themselves
+    if (isMobile) {
+      reconSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
 
     const token = ++convertTokenRef.current;
     setComputing(true);
@@ -607,7 +613,7 @@ export default function FourierArt() {
             )}
           </div>
 
-          <div className="fa-card" style={{ padding: isMobile ? 14 : 18 }}>
+          <div ref={reconSectionRef} className="fa-card" style={{ padding: isMobile ? 14 : 18 }}>
             <h3 style={{ margin: "0 0 12px", display: "flex", alignItems: "center", gap: 8, fontSize: 16 }}>
               <span className="fa-badge">2</span> Reconstruction
             </h3>
